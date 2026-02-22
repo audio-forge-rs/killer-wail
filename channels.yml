@@ -1,0 +1,17 @@
+channels:
+- channel: 0
+  name: Kick
+- channel: 1
+  name: Snare
+- channel: 2
+  name: HiHat
+- channel: 3
+  name: Perc
+- channel: 4
+  name: Bass
+- channel: 5
+  name: Lead
+- channel: 6
+  name: Pad
+- channel: 7
+  name: FX
