@@ -22,7 +22,7 @@ from killer_wail.session import (
 class TestSessionConfig:
     def test_default_command(self):
         cfg = SessionConfig()
-        assert cfg.orca_command() == ["orca", "--strict-timing"]
+        assert cfg.orca_command() == ["orca"]
 
     def test_command_with_bpm(self):
         cfg = SessionConfig(bpm=140)
@@ -37,9 +37,6 @@ class TestSessionConfig:
         cmd = cfg.orca_command()
         assert str(f) in cmd
 
-    def test_command_without_strict_timing(self):
-        cfg = SessionConfig(strict_timing=False)
-        assert "--strict-timing" not in cfg.orca_command()
 
 
 class TestRequireTmux:

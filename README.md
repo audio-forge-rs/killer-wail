@@ -138,7 +138,7 @@ src/orca/
 
 ## How It Works
 
-1. `kw start` launches Orca-c in a detached tmux session with `--strict-timing`
+1. `kw start` launches Orca-c in a detached tmux session
 2. `kw swap` atomically overwrites the target .orca file (temp file + `os.replace`), then sends `Ctrl+O` → `Enter` to Orca-c via `tmux send-keys` — Orca's open dialog pre-populates with the current filename, so Enter re-reads from disk
 3. `kw watch` uses [watchdog](https://github.com/gorakhargosh/watchdog) to monitor file changes and triggers the same reload
 
@@ -157,7 +157,6 @@ pytest tests/test_midi.py -v
 
 ## Timing Notes
 
-- Orca-c's `--strict-timing` flag reduces MIDI timing jitter
-- The 0.1ms offset you apply in Bitwig compensates for the remaining jitter
+- The 0.1ms offset you apply in Bitwig compensates for MIDI timing jitter
 - After recording a MIDI clip in Bitwig, press Q to quantize
 - For tightest timing: use lower BPM subdivisions in Orca and quantize in Bitwig

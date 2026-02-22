@@ -32,7 +32,6 @@ class SessionConfig:
     orca_bin: str = "orca"
     session_name: str = SESSION_NAME
     bpm: int = DEFAULT_BPM
-    strict_timing: bool = True
     file_path: Path | None = None
 
     def orca_command(self) -> list[str]:
@@ -40,8 +39,6 @@ class SessionConfig:
         cmd = [self.orca_bin]
         if self.bpm != DEFAULT_BPM:
             cmd.extend(["--bpm", str(self.bpm)])
-        if self.strict_timing:
-            cmd.append("--strict-timing")
         if self.file_path:
             cmd.append(str(self.file_path))
         return cmd

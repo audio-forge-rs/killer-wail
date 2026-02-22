@@ -58,20 +58,17 @@ def main(ctx: click.Context, verbose: bool) -> None:
 @click.option("--bpm", default=120, help="Tempo in BPM (default: 120)")
 @click.option("--session", default="orca", help="Tmux session name")
 @click.option("--orca-bin", default="orca", help="Path to orca binary")
-@click.option("--no-strict-timing", is_flag=True, help="Disable strict timing")
 def start_cmd(
     file: Path | None,
     bpm: int,
     session: str,
     orca_bin: str,
-    no_strict_timing: bool,
 ) -> None:
     """Start Orca-c in a tmux session."""
     config = SessionConfig(
         orca_bin=orca_bin,
         session_name=session,
         bpm=bpm,
-        strict_timing=not no_strict_timing,
         file_path=file,
     )
     try:
