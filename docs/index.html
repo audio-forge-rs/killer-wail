@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>killer-wail</title>
+  <style>
+    :root {
+      --fg: #1a1a1a;
+      --bg: #fafaf8;
+      --accent: #e04e2a;
+      --muted: #6b6b6b;
+      --code-bg: #f0efec;
+      --max-w: 640px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e8e6e1;
+        --bg: #171714;
+        --accent: #f0704e;
+        --muted: #9a9a90;
+        --code-bg: #222220;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem 6rem;
+    }
+    main {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    h1 {
+      font-family: 'Menlo', 'Courier New', monospace;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.3rem;
+    }
+    .tagline {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 3rem;
+    }
+    h2 {
+      font-family: 'Menlo', 'Courier New', monospace;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      font-size: 1.05rem;
+      margin-bottom: 1.2rem;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    a:hover { border-bottom-color: var(--accent); }
+    code {
+      font-family: 'Menlo', 'Courier New', monospace;
+      font-size: 0.88em;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+    }
+    pre {
+      background: var(--code-bg);
+      padding: 1.2rem 1.4rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-bottom: 1.4rem;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+    }
+    .sep {
+      border: none;
+      border-top: 1px solid var(--code-bg);
+      margin: 3rem 0;
+    }
+    footer {
+      margin-top: 4rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<main>
+
+<h1>killer-wail</h1>
+<p class="tagline">Hot-swap orchestrator for Orca-c and Bitwig Studio on macOS.</p>
+
+<p>
+<a href="https://github.com/hundredrabbits/Orca-c">Orca-c</a> is a brilliant livecoding environment, but it has no IPC, no file watching, and no external control mechanism. It reads its file once at startup and ignores the outside world. The only way to make it reload is to physically press Ctrl+O inside the TUI.
+</p>
+
+<p>
+killer-wail works around this by running Orca-c inside a tmux session and using <code>tmux send-keys</code> to simulate those keystrokes from the outside. You can swap patterns, auto-reload on save, and map MIDI channels to Bitwig tracks without ever touching the Orca window.
+</p>
+
+<h2>The Trick</h2>
+
+<p>
+When Orca-c opens its file dialog with Ctrl+O, it pre-populates the input with the current filename. So the reload sequence is just two keystrokes: open the dialog, then press Enter to accept what's already there. Orca re-reads from disk instantly.
+</p>
+
+<p>
+The catch is that if you're writing to the same file Orca is reading, you can get a partial read. killer-wail solves this with atomic writes: it writes to a temp file first, then does an <code>os.replace()</code> to swap it into place in a single filesystem operation. By the time Orca looks, the file is always complete.
+</p>
+
+<h2>Getting Started</h2>
+
+<p>
+You'll need macOS, Python 3.10 or later, tmux, and an Orca-c binary in your PATH. Build Orca-c from the <a href="https://github.com/hundredrabbits/Orca-c">hundredrabbits repo</a> and install tmux with <code>brew install tmux</code> if you haven't already.
+</p>
+
+<pre><code>pip install -e ".[dev]"</code></pre>
+
+<p>
+That gives you the <code>kw</code> command. Start an Orca session, swap patterns on the fly, and watch files for automatic reload.
+</p>
+
+<pre><code>kw start orca/kick.orca --bpm 120
+kw swap orca/backbeat.orca
+kw watch orca/
+kw stop</code></pre>
+
+<h2>MIDI Channels</h2>
+
+<p>
+Orca's <code>:</code> operator sends MIDI with a hex channel character from 0 to f, mapping to MIDI channels 1 through 16. killer-wail gives you a <code>channels.yml</code> config that maps those hex values to human-readable track names in Bitwig.
+</p>
+
+<p>
+Run <code>kw channels --init</code> to generate a default mapping, then edit it to match your Bitwig session. Run <code>kw scan</code> on any pattern file to see which channels it uses and what they'll route to.
+</p>
+
+<h2>Watch Mode</h2>
+
+<p>
+Point <code>kw watch</code> at a file or directory and it monitors for changes using <a href="https://github.com/gorakhargosh/watchdog">watchdog</a>. Every time you save, Orca reloads. Events are debounced at 150 milliseconds so editors that trigger multiple write events on a single save don't cause a reload storm.
+</p>
+
+<h2>Timing</h2>
+
+<p>
+MIDI timing over software is never sample-accurate, but it's close enough to be useful. Apply a small offset in Bitwig to compensate for jitter, and quantize your recorded clips after the fact. For the tightest results, use lower BPM subdivisions in Orca and let Bitwig snap everything to the grid.
+</p>
+
+<hr class="sep">
+
+<footer>
+<a href="https://github.com/audio-forge-rs/killer-wail">Source on GitHub</a>
+</footer>
+
+</main>
+</body>
+</html>
